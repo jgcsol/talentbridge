@@ -1,0 +1,39 @@
+# ── Secrets / local config ────────────────────────────────────────────────────
+.env
+.env.local
+.env*.local
+!.env*.example
+
+# VS Code launch configs (may contain local credentials)
+**/.vscode/launch.json
+
+# ── Frontend (Next.js) ────────────────────────────────────────────────────────
+talent-bridge/node_modules/
+talent-bridge/.next/
+talent-bridge/out/
+talent-bridge/coverage/
+talent-bridge/.vercel
+talent-bridge/*.tsbuildinfo
+talent-bridge/next-env.d.ts
+
+# ── Backend (Spring Boot / Maven) ────────────────────────────────────────────
+talent-bridge-api/target/
+talent-bridge-api/src/main/resources/application-local.yml
+talent-bridge-api/.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ── OS artifacts ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Workspace storage ─────────────────────────────────────────────────────────
+*.code-workspace
+
+# Windows null device artifact
+nul

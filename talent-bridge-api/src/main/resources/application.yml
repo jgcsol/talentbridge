@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: talentbridge-api
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  cache:
+    type: simple
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        options:
+          model: claude-3-5-sonnet-20241022
+          max-tokens: 4096
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION}       # 24 hours
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION}  # 7 days
+
+  onet:
+    base-url: https://api-v2.onetcenter.org
+    api-key: ${ONET_API_KEY}
+    cache-ttl-hours: 24
+
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}
+
+  reset-password:
+    expiration-minutes: 30
+
+  aws:
+    region: us-east-1
+    s3:
+      bucket: ${AWS_S3_RESUME_BUCKET}
+    ses:
+      from-email: ${AWS_SES_FROM_EMAIL}
+
+logging:
+  level:
+    com.talentbridge: DEBUG
+
