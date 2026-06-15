@@ -5,21 +5,21 @@
 !.env*.example
 
 # VS Code launch configs (may contain local credentials)
-**/.vscode/launch.json
+**/.vscode/*
 
 # ── Frontend (Next.js) ────────────────────────────────────────────────────────
-talent-bridge/node_modules/
-talent-bridge/.next/
-talent-bridge/out/
-talent-bridge/coverage/
-talent-bridge/.vercel
-talent-bridge/*.tsbuildinfo
-talent-bridge/next-env.d.ts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+frontend/.vercel
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
 
 # ── Backend (Spring Boot / Maven) ────────────────────────────────────────────
-talent-bridge-api/target/
-talent-bridge-api/src/main/resources/application-local.yml
-talent-bridge-api/.mvn/wrapper/maven-wrapper.jar
+backend/target/*
+backend/src/main/resources/application-local.yml
 
 # IDE
 .idea/
