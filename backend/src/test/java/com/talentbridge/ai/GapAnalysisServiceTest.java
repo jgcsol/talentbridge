@@ -67,7 +67,6 @@ class GapAnalysisServiceTest {
         OnetOccupation occupation = sampleOccupation();
         GapAnalysisResult result = sampleResult();
 
-        // Mock the ChatClient chain
         ChatClient.ChatClientRequestSpec requestSpec = mock(ChatClient.ChatClientRequestSpec.class);
         ChatClient.ChatClientRequestSpec userSpec = mock(ChatClient.ChatClientRequestSpec.class);
         ChatClient.CallResponseSpec callSpec = mock(ChatClient.CallResponseSpec.class);
@@ -89,7 +88,8 @@ class GapAnalysisServiceTest {
         assertThat(saved.getOverallScore()).isEqualTo(75);
         assertThat(saved.getOccupationCode()).isEqualTo("15-1252.00");
         assertThat(saved.getOccupationTitle()).isEqualTo("Software Developer");
-        verify(gapAnalysisRepository, never()).delete(any());
+        // No existing record — deleteAndFlush should never be called
+        verify(gapAnalysisRepository, never()).deleteAndFlush(any());
         verify(gapAnalysisRepository).save(any(GapAnalysis.class));
     }
 
@@ -119,7 +119,32 @@ class GapAnalysisServiceTest {
 
         gapAnalysisService.analyzeAndSave(candidate, occupation);
 
-        verify(gapAnalysisRepository).delete(existing);
+        // Fix: verify deleteAndFlush (not delete) since we changed the upsert logic
+        verify(gapAnalysisRepository).deleteAndFlush(existing);
         verify(gapAnalysisRepository).save(any(GapAnalysis.class));
+    }
+
+    @Test
+    void analyze_throwsRuntimeException_whenAiFails() throws Exception {
+        CandidateProfile candidate = sampleCandidate();
+        OnetOccupation occupation = sampleOccupation();
+
+        ChatClient.ChatClientRequestSpec requestSpec = mock(ChatClient.ChatClientRequestSpec.class);
+        ChatClient.ChatClientRequestSpec userSpec = mock(ChatClient.ChatClientRequestSpec.class);
+        ChatClient.CallResponseSpec callSpec = mock(ChatClient.CallResponseSpec.class);
+
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system(any(String.class))).thenReturn(userSpec);
+        when(userSpec.user(any(String.class))).thenReturn(userSpec);
+        when(userSpec.call()).thenReturn(callSpec);
+        when(callSpec.content()).thenReturn("not-valid-json");
+
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(objectMapper.readValue(any(String.class), eq(GapAnalysisResult.class)))
+                .thenThrow(new com.fasterxml.jackson.core.JsonParseException(null, "bad json"));
+
+        assertThatThrownBy(() -> gapAnalysisService.analyze(candidate, occupation))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Gap analysis failed");
     }
 }

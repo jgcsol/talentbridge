@@ -112,7 +112,7 @@ class CandidateProfileServiceTest {
     // ─── uploadAndParseResume ─────────────────────────────────────────────────
 
     @Test
-    void uploadAndParseResume_uploadsAndUpdatesProfile() {
+    void uploadAndParseResume_uploadsAndUpdatesProfile_whenParseSucceeds() {
         UUID userId = UUID.randomUUID();
         CandidateProfile profile = CandidateProfile.builder().id(UUID.randomUUID()).build();
         when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
@@ -132,7 +132,32 @@ class CandidateProfileServiceTest {
 
         assertThat(result.getHeadline()).isEqualTo("Software Engineer");
         assertThat(result.getSummary()).isEqualTo("Experienced developer");
+        // Fix #9: profileComplete should be true only when parsing returned a headline
         assertThat(result.isProfileComplete()).isTrue();
         verify(s3Service).upload(eq("resumes/%s/resume.pdf".formatted(userId)), eq(file));
+    }
+
+    @Test
+    void uploadAndParseResume_leavesProfileIncomplete_whenParseFails() {
+        // Fix #9: When Tika/AI fails, the parser returns an empty ParsedResume (null headline).
+        // The service must NOT mark profileComplete=true in this case.
+        UUID userId = UUID.randomUUID();
+        CandidateProfile profile = CandidateProfile.builder().id(UUID.randomUUID()).build();
+        when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(profileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Simulate failed parse — emptyParsedResume() returns null headline
+        ParsedResume emptyParsed = new ParsedResume(null, null, List.of(), List.of(), List.of(), List.of());
+        when(resumeParserService.parse(any())).thenReturn(emptyParsed);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "resume.pdf", "application/pdf", "pdf content".getBytes());
+
+        CandidateProfile result = candidateProfileService.uploadAndParseResume(userId, file);
+
+        assertThat(result.getHeadline()).isNull();
+        assertThat(result.isProfileComplete()).isFalse();
+        // S3 upload should still have happened
+        verify(s3Service).upload(any(), eq(file));
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import org.springframework.core.ParameterizedTypeReference;
 
@@ -32,7 +33,6 @@ public class OnetClient {
 
     /**
      * Search occupations by keyword. Results cached for 24h.
-     * O*NET /mnm/search returns a "career" array; we normalise to OnetSearchResult.
      */
     @Cacheable(value = "onet-search", key = "#keyword + '-' + #start")
     public OnetSearchResult searchOccupations(String keyword, int start, int end) {
@@ -52,30 +52,30 @@ public class OnetClient {
 
     /**
      * Get full occupation details including skills. Cached per O*NET code.
+     * Fix #10: details and skills are fetched in parallel via Mono.zip instead of sequentially.
      */
     @Cacheable(value = "onet-occupation", key = "#code")
     public OnetOccupation getOccupation(String code) {
         log.debug("Fetching O*NET occupation: {}", code);
 
-        // Fetch details and skills in parallel, then combine
-        Map<String, Object> details = webClient.get()
+        Mono<Map<String, Object>> detailsMono = webClient.get()
                 .uri("/online/occupations/{code}", code)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
 
-        Map<String, Object> skillsResponse = webClient.get()
+        Mono<Map<String, Object>> skillsMono = webClient.get()
                 .uri("/online/occupations/{code}/skills", code)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
 
-        return OnetResponseMapper.toOccupation(code, details, skillsResponse);
+        // Zip subscribes to both Monos concurrently, then combines the results
+        return Mono.zip(detailsMono, skillsMono)
+                .map(tuple -> OnetResponseMapper.toOccupation(code, tuple.getT1(), tuple.getT2()))
+                .block();
     }
 
     /**
      * List all O*NET occupations with pagination.
-     * O*NET /online/occupations returns an "occupation" array; tags field is an object — use raw Map.
      */
     @Cacheable(value = "onet-all", key = "#start")
     public OnetSearchResult listAllOccupations(int start, int end) {
@@ -94,7 +94,6 @@ public class OnetClient {
 
     /**
      * Browse occupations within a specific career cluster / industry.
-     * Uses the MNM "fit" pathway by keyword-searching the cluster title.
      */
     @Cacheable(value = "onet-industry-occs", key = "#industryCode + '-' + #start")
     public OnetSearchResult browseByIndustry(String industryCode, int start, int end) {

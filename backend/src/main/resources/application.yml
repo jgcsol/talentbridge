@@ -10,7 +10,9 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      # Fix #7: Use 'validate' so Hibernate checks schema but never modifies it.
+      # Schema changes are managed by Flyway migrations instead.
+      ddl-auto: validate
     show-sql: false
     open-in-view: false
     properties:
@@ -19,7 +21,9 @@ spring:
         format_sql: true
 
   flyway:
-    enabled: false
+    # Fix #7: Enable Flyway for safe, versioned schema migrations
+    enabled: true
+    locations: classpath:db/migration
 
   autoconfigure:
     exclude:
@@ -39,7 +43,7 @@ spring:
       api-key: ${ANTHROPIC_API_KEY}
       chat:
         options:
-          model: claude-3-5-sonnet-20241022
+          model: claude-sonnet-4-6
           max-tokens: 4096
 
 server:
@@ -50,8 +54,8 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    expiration-ms: ${JWT_EXPIRATION}       # 24 hours
-    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION}  # 7 days
+    expiration-ms: ${JWT_EXPIRATION}           # e.g. 86400000 for 24 hours
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION}  # e.g. 604800000 for 7 days
 
   onet:
     base-url: https://api-v2.onetcenter.org
@@ -77,4 +81,3 @@ app:
 logging:
   level:
     com.talentbridge: INFO
-

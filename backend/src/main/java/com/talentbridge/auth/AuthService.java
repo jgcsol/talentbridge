@@ -1,5 +1,8 @@
 package com.talentbridge.auth;
 
+import com.talentbridge.auth.AuthDTOs.AuthResponse;
+import com.talentbridge.auth.AuthDTOs.LoginRequest;
+import com.talentbridge.auth.AuthDTOs.RegisterRequest;
 import com.talentbridge.candidate.CandidateProfileService;
 import com.talentbridge.employer.EmployerProfileService;
 import io.jsonwebtoken.Claims;
@@ -45,6 +48,11 @@ public class AuthService {
             throw new IllegalArgumentException("Email already in use");
         }
 
+        // Fix #8: Restrict self-registration to CANDIDATE or EMPLOYER only
+        if (request.role() != User.Role.CANDIDATE && request.role() != User.Role.EMPLOYER) {
+            throw new IllegalArgumentException("Invalid role for registration");
+        }
+
         User user = User.builder()
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
@@ -53,7 +61,6 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        // Create the appropriate profile stub
         if (user.getRole() == User.Role.CANDIDATE) {
             candidateProfileService.createProfile(user);
         } else {
@@ -94,24 +101,29 @@ public class AuthService {
     public void forgotPassword(String email) {
         // Always return silently — never reveal whether the email exists
         userRepository.findByEmail(email).ifPresent(user -> {
-            // Invalidate any existing tokens for this user
             passwordResetTokenRepository.deleteAllByUserId(user.getId());
 
+            // Fix #11: Hash the token before storing so a DB breach doesn't expose active tokens
             String rawToken = UUID.randomUUID().toString();
+            String hashedToken = hashToken(rawToken);
+
             PasswordResetToken resetToken = PasswordResetToken.builder()
-                    .token(rawToken)
+                    .token(hashedToken)
                     .user(user)
                     .expiresAt(Instant.now().plus(resetTokenExpirationMinutes, ChronoUnit.MINUTES))
                     .build();
             passwordResetTokenRepository.save(resetToken);
 
+            // Send the raw token in the email; store only the hash
             sendResetEmail(user.getEmail(), rawToken);
         });
     }
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+        // Fix #11: Look up by hashed token
+        String hashedToken = hashToken(token);
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(hashedToken)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
 
         if (resetToken.isUsed()) {
@@ -127,6 +139,19 @@ public class AuthService {
 
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
+    }
+
+    // Fix #11: SHA-256 hash of the raw token for safe storage
+    private String hashToken(String rawToken) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     private void sendResetEmail(String toEmail, String token) {
@@ -161,4 +186,3 @@ public class AuthService {
         return new AuthResponse(token, refreshToken, user.getId(), user.getEmail(), user.getRole().name());
     }
 }
-

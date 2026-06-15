@@ -45,15 +45,25 @@ public class CandidateProfileService {
         // Extract text and parse with AI
         ParsedResume parsed = resumeParserService.parse(file);
 
+        // Fix #9: Only mark the profile complete when parsing actually produced data.
+        // If Tika or the AI failed, parsed will have null headline and empty lists,
+        // so we leave profileComplete=false so the user knows to try again.
+        boolean parseSucceeded = parsed.headline() != null;
+
         profile.setHeadline(parsed.headline());
         profile.setSummary(parsed.summary());
         profile.setSkills(parsed.skills());
         profile.setExperiences(parsed.experiences());
         profile.setEducations(parsed.educations());
         profile.setCertifications(parsed.certifications());
-        profile.setProfileComplete(true);
+        profile.setProfileComplete(parseSucceeded);
 
-        log.info("Resume parsed and profile updated for user {}", userId);
+        if (!parseSucceeded) {
+            log.warn("Resume uploaded for user {} but parsing failed — profile marked incomplete", userId);
+        } else {
+            log.info("Resume parsed and profile updated for user {}", userId);
+        }
+
         return profileRepository.save(profile);
     }
 

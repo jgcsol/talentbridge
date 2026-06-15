@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.talentbridge.auth.AuthDTOs.ForgotPasswordRequest;
 import com.talentbridge.auth.AuthDTOs.ResetPasswordRequest;
+import com.talentbridge.auth.AuthDTOs.RegisterRequest;
+import com.talentbridge.auth.AuthDTOs.LoginRequest;
+import com.talentbridge.auth.AuthDTOs.RefreshRequest;
+import com.talentbridge.auth.AuthDTOs.AuthResponse;
 
 @RestController
 @RequestMapping("/auth")
@@ -27,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         return ResponseEntity.ok(authService.refresh(request.refreshToken()));
     }
 
@@ -43,4 +47,3 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 }
-

@@ -1,7 +1,7 @@
 package com.talentbridge.ai;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.talentbridge.application.Application;
+import com.talentbridge.application.JobApplication;
 import com.talentbridge.candidate.CandidateProfile;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,7 +29,7 @@ public class GapAnalysis {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id")
-    private Application application;
+    private JobApplication application;  // Fix #14: renamed from Application -> JobApplication
 
     @Column(nullable = false)
     private String occupationCode;

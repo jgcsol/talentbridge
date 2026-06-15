@@ -1,11 +1,13 @@
 package com.talentbridge.auth;
 
+import com.talentbridge.auth.AuthDTOs.AuthResponse;
+import com.talentbridge.auth.AuthDTOs.LoginRequest;
+import com.talentbridge.auth.AuthDTOs.RegisterRequest;
 import com.talentbridge.candidate.CandidateProfileService;
 import com.talentbridge.employer.EmployerProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.ses.SesClient;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +45,19 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "fromEmail", "noreply@test.com");
         ReflectionTestUtils.setField(authService, "frontendUrl", "http://localhost:3000");
         ReflectionTestUtils.setField(authService, "resetTokenExpirationMinutes", 30);
+    }
+
+    // Helper — mirrors AuthService.hashToken() so tests can pre-hash tokens for mocking
+    private static String sha256(String raw) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(raw.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // ─── register ────────────────────────────────────────────────────────────
@@ -172,7 +189,6 @@ class AuthServiceTest {
     void forgotPassword_doesNotThrow_forUnknownEmail() {
         when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
 
-        // Must complete silently (never reveal whether email exists)
         assertThatCode(() -> authService.forgotPassword("nobody@example.com"))
                 .doesNotThrowAnyException();
 
@@ -194,26 +210,49 @@ class AuthServiceTest {
         verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
     }
 
+    @Test
+    void forgotPassword_storesHashedToken_notRawToken() {
+        UUID userId = UUID.randomUUID();
+        User user = User.builder().id(userId).email("user@example.com")
+                .role(User.Role.CANDIDATE).build();
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+
+        var tokenCaptor = org.mockito.ArgumentCaptor.forClass(PasswordResetToken.class);
+        when(passwordResetTokenRepository.save(tokenCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+        authService.forgotPassword("user@example.com");
+
+        PasswordResetToken saved = tokenCaptor.getValue();
+        // The stored token must be a 64-char SHA-256 hex string, not a raw UUID
+        assertThat(saved.getToken()).hasSize(64);
+        assertThat(saved.getToken()).matches("[0-9a-f]{64}");
+    }
+
     // ─── resetPassword ────────────────────────────────────────────────────────
 
     @Test
     void resetPassword_updatesPassword_forValidToken() {
+        // The service hashes the raw token before lookup, so we stub with the hash
+        String rawToken = "valid-raw-token";
+        String hashedToken = sha256(rawToken);
+
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("user@example.com")
                 .role(User.Role.CANDIDATE).passwordHash("old-hash").build();
         PasswordResetToken token = PasswordResetToken.builder()
-                .token("valid-token")
+                .token(hashedToken)
                 .user(user)
                 .expiresAt(Instant.now().plusSeconds(300))
                 .used(false)
                 .build();
 
-        when(passwordResetTokenRepository.findByToken("valid-token")).thenReturn(Optional.of(token));
+        when(passwordResetTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(token));
         when(passwordEncoder.encode("newPassword")).thenReturn("new-hash");
         when(userRepository.save(any())).thenReturn(user);
         when(passwordResetTokenRepository.save(any())).thenReturn(token);
 
-        authService.resetPassword("valid-token", "newPassword");
+        authService.resetPassword(rawToken, "newPassword");
 
         assertThat(user.getPasswordHash()).isEqualTo("new-hash");
         assertThat(token.isUsed()).isTrue();
@@ -221,33 +260,51 @@ class AuthServiceTest {
 
     @Test
     void resetPassword_throws_forUsedToken() {
+        String rawToken = "used-raw-token";
+        String hashedToken = sha256(rawToken);
+
         PasswordResetToken token = PasswordResetToken.builder()
-                .token("used-token")
+                .token(hashedToken)
                 .user(User.builder().id(UUID.randomUUID()).build())
                 .expiresAt(Instant.now().plusSeconds(300))
                 .used(true)
                 .build();
 
-        when(passwordResetTokenRepository.findByToken("used-token")).thenReturn(Optional.of(token));
+        when(passwordResetTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(token));
 
-        assertThatThrownBy(() -> authService.resetPassword("used-token", "newPassword"))
+        assertThatThrownBy(() -> authService.resetPassword(rawToken, "newPassword"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already been used");
     }
 
     @Test
     void resetPassword_throws_forExpiredToken() {
+        String rawToken = "expired-raw-token";
+        String hashedToken = sha256(rawToken);
+
         PasswordResetToken token = PasswordResetToken.builder()
-                .token("expired-token")
+                .token(hashedToken)
                 .user(User.builder().id(UUID.randomUUID()).build())
                 .expiresAt(Instant.now().minusSeconds(1))
                 .used(false)
                 .build();
 
-        when(passwordResetTokenRepository.findByToken("expired-token")).thenReturn(Optional.of(token));
+        when(passwordResetTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(token));
 
-        assertThatThrownBy(() -> authService.resetPassword("expired-token", "newPassword"))
+        assertThatThrownBy(() -> authService.resetPassword(rawToken, "newPassword"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("expired");
+    }
+
+    @Test
+    void resetPassword_throws_forUnknownToken() {
+        String rawToken = "unknown-token";
+        String hashedToken = sha256(rawToken);
+
+        when(passwordResetTokenRepository.findByToken(hashedToken)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.resetPassword(rawToken, "newPassword"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid or expired");
     }
 }

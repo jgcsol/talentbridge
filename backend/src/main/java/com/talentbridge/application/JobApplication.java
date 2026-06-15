@@ -17,7 +17,7 @@ import java.util.UUID;
     uniqueConstraints = @UniqueConstraint(columnNames = {"job_posting_id", "candidate_id"})
 )
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Application {
+public class JobApplication {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

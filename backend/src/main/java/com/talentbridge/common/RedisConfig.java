@@ -34,10 +34,13 @@ public class RedisConfig {
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)
+                // Fix #3: Register all cache names used in OnetClient
                 .withInitialCacheConfigurations(Map.of(
-                        "onet-search", onetConfig,
-                        "onet-occupation", onetConfig,
-                        "onet-industries", onetConfig
+                        "onet-search",        onetConfig,
+                        "onet-occupation",    onetConfig,
+                        "onet-industries",    onetConfig,
+                        "onet-all",           onetConfig,   // used by listAllOccupations()
+                        "onet-industry-occs", onetConfig    // used by browseByIndustry()
                 ))
                 .build();
     }

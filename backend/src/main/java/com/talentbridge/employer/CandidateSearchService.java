@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +20,15 @@ public class CandidateSearchService {
 
     private final CandidateProfileRepository profileRepository;
 
+    // Fix #5: @Transactional(readOnly = true) so the lazy user association
+    // can be accessed inside toSearchResult() without a LazyInitializationException
+    @Transactional(readOnly = true)
     public Page<CandidateSearchResult> search(String keyword, Pageable pageable) {
         Specification<CandidateProfile> spec = buildSpec(keyword);
         return profileRepository.findAll(spec, pageable).map(this::toSearchResult);
     }
 
+    @Transactional(readOnly = true)
     public CandidateSearchResult getById(UUID candidateId) {
         CandidateProfile profile = profileRepository.findById(candidateId)
                 .orElseThrow(() -> new IllegalStateException("Candidate not found"));
@@ -45,7 +50,7 @@ public class CandidateSearchService {
             // Only show complete profiles
             predicates.add(cb.isTrue(root.get("profileComplete")));
 
-            // Keyword search on headline (skills JSONB search handled at DB level via GIN index)
+            // Keyword search on headline and summary
             if (keyword != null && !keyword.isBlank()) {
                 String pattern = "%" + keyword.toLowerCase() + "%";
                 predicates.add(cb.or(

@@ -1,6 +1,9 @@
 package com.talentbridge.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.talentbridge.auth.AuthDTOs.AuthResponse;
+import com.talentbridge.auth.AuthDTOs.LoginRequest;
+import com.talentbridge.auth.AuthDTOs.RegisterRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,7 +27,7 @@ class AuthControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean  private AuthService authService;
-    @MockBean  private JwtService jwtService; // needed so JwtAuthFilter can be constructed
+    @MockBean  private JwtService jwtService;
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final AuthResponse AUTH_RESPONSE =
