@@ -45,26 +45,35 @@ public class CandidateProfileService {
         // Extract text and parse with AI
         ParsedResume parsed = resumeParserService.parse(file);
 
-        // Fix #9: Only mark the profile complete when parsing actually produced data.
-        // If Tika or the AI failed, parsed will have null headline and empty lists,
-        // so we leave profileComplete=false so the user knows to try again.
-        boolean parseSucceeded = parsed.headline() != null;
+        // Only overwrite a field when the parse actually produced data for it, so a
+        // partial/failed parse never wipes out information the user already entered.
+        if (parsed.headline() != null) profile.setHeadline(parsed.headline());
+        if (parsed.location() != null) profile.setLocation(parsed.location());
+        if (parsed.summary() != null) profile.setSummary(parsed.summary());
+        if (isNotEmpty(parsed.skills())) profile.setSkills(parsed.skills());
+        if (isNotEmpty(parsed.experiences())) profile.setExperiences(parsed.experiences());
+        if (isNotEmpty(parsed.educations())) profile.setEducations(parsed.educations());
+        if (isNotEmpty(parsed.certifications())) profile.setCertifications(parsed.certifications());
 
-        profile.setHeadline(parsed.headline());
-        profile.setSummary(parsed.summary());
-        profile.setSkills(parsed.skills());
-        profile.setExperiences(parsed.experiences());
-        profile.setEducations(parsed.educations());
-        profile.setCertifications(parsed.certifications());
-        profile.setProfileComplete(parseSucceeded);
+        // A profile is "complete" when the resume yielded the core of a profile: a headline
+        // plus at least one of skills or experience. A lone headline is not a profile.
+        boolean hasHeadline = profile.getHeadline() != null;
+        boolean hasCoreData = isNotEmpty(profile.getSkills()) || isNotEmpty(profile.getExperiences());
+        boolean profileComplete = hasHeadline && hasCoreData;
+        profile.setProfileComplete(profileComplete);
 
-        if (!parseSucceeded) {
-            log.warn("Resume uploaded for user {} but parsing failed — profile marked incomplete", userId);
-        } else {
+        if (profileComplete) {
             log.info("Resume parsed and profile updated for user {}", userId);
+        } else {
+            log.warn("Resume uploaded for user {} but parsing produced insufficient data — "
+                    + "profile marked incomplete", userId);
         }
 
         return profileRepository.save(profile);
+    }
+
+    private static boolean isNotEmpty(java.util.List<?> list) {
+        return list != null && !list.isEmpty();
     }
 
     @Transactional

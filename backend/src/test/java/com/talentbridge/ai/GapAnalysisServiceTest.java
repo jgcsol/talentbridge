@@ -88,8 +88,8 @@ class GapAnalysisServiceTest {
         assertThat(saved.getOverallScore()).isEqualTo(75);
         assertThat(saved.getOccupationCode()).isEqualTo("15-1252.00");
         assertThat(saved.getOccupationTitle()).isEqualTo("Software Developer");
-        // No existing record — deleteAndFlush should never be called
-        verify(gapAnalysisRepository, never()).deleteAndFlush(any());
+        // No existing record — delete should never be called
+        verify(gapAnalysisRepository, never()).delete(any());
         verify(gapAnalysisRepository).save(any(GapAnalysis.class));
     }
 
@@ -119,8 +119,9 @@ class GapAnalysisServiceTest {
 
         gapAnalysisService.analyzeAndSave(candidate, occupation);
 
-        // Fix: verify deleteAndFlush (not delete) since we changed the upsert logic
-        verify(gapAnalysisRepository).deleteAndFlush(existing);
+        // Verify the existing record is deleted (and flushed) before saving the new one
+        verify(gapAnalysisRepository).delete(existing);
+        verify(gapAnalysisRepository).flush();
         verify(gapAnalysisRepository).save(any(GapAnalysis.class));
     }
 

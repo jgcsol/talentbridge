@@ -5,6 +5,7 @@ import com.talentbridge.application.JobApplication;
 import com.talentbridge.candidate.CandidateProfile;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -29,7 +30,7 @@ public class GapAnalysis {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id")
-    private JobApplication application;  // Fix #14: renamed from Application -> JobApplication
+    private JobApplication application;  
 
     @Column(nullable = false)
     private String occupationCode;
@@ -56,6 +57,7 @@ public class GapAnalysis {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
-    @Column(nullable = false)
-    private Instant generatedAt = Instant.now();
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant generatedAt;
 }

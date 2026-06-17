@@ -120,6 +120,7 @@ class CandidateProfileServiceTest {
 
         ParsedResume parsed = new ParsedResume(
                 "Software Engineer",
+                "Austin, TX",
                 "Experienced developer",
                 List.of(new CandidateProfile.Skill("Java", "Language", 3, "ADVANCED")),
                 null, null, null);
@@ -131,10 +132,60 @@ class CandidateProfileServiceTest {
         CandidateProfile result = candidateProfileService.uploadAndParseResume(userId, file);
 
         assertThat(result.getHeadline()).isEqualTo("Software Engineer");
+        assertThat(result.getLocation()).isEqualTo("Austin, TX");
         assertThat(result.getSummary()).isEqualTo("Experienced developer");
-        // Fix #9: profileComplete should be true only when parsing returned a headline
+        assertThat(result.getSkills()).hasSize(1);
+        // Complete: has a headline AND core data (skills)
         assertThat(result.isProfileComplete()).isTrue();
         verify(s3Service).upload(eq("resumes/%s/resume.pdf".formatted(userId)), eq(file));
+    }
+
+    @Test
+    void uploadAndParseResume_incomplete_whenHeadlineButNoCoreData() {
+        // A lone headline (no skills, no experience) is not a complete profile.
+        UUID userId = UUID.randomUUID();
+        CandidateProfile profile = CandidateProfile.builder().id(UUID.randomUUID()).build();
+        when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(profileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ParsedResume parsed = new ParsedResume(
+                "Software Engineer", null, "A summary",
+                List.of(), List.of(), List.of(), List.of());
+        when(resumeParserService.parse(any())).thenReturn(parsed);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "resume.pdf", "application/pdf", "pdf content".getBytes());
+
+        CandidateProfile result = candidateProfileService.uploadAndParseResume(userId, file);
+
+        assertThat(result.getHeadline()).isEqualTo("Software Engineer");
+        assertThat(result.isProfileComplete()).isFalse();
+    }
+
+    @Test
+    void uploadAndParseResume_doesNotOverwriteExistingDataWithEmptyParse() {
+        // A failed/empty parse must not wipe out data the user already had.
+        UUID userId = UUID.randomUUID();
+        CandidateProfile profile = CandidateProfile.builder()
+                .id(UUID.randomUUID())
+                .headline("Existing Headline")
+                .location("Existing City")
+                .skills(List.of(new CandidateProfile.Skill("Java", "Language", 3, "ADVANCED")))
+                .build();
+        when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(profileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ParsedResume emptyParsed = new ParsedResume(null, null, null, List.of(), List.of(), List.of(), List.of());
+        when(resumeParserService.parse(any())).thenReturn(emptyParsed);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "resume.pdf", "application/pdf", "pdf content".getBytes());
+
+        CandidateProfile result = candidateProfileService.uploadAndParseResume(userId, file);
+
+        assertThat(result.getHeadline()).isEqualTo("Existing Headline");
+        assertThat(result.getLocation()).isEqualTo("Existing City");
+        assertThat(result.getSkills()).hasSize(1);
     }
 
     @Test
@@ -147,7 +198,7 @@ class CandidateProfileServiceTest {
         when(profileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // Simulate failed parse — emptyParsedResume() returns null headline
-        ParsedResume emptyParsed = new ParsedResume(null, null, List.of(), List.of(), List.of(), List.of());
+        ParsedResume emptyParsed = new ParsedResume(null, null, null, List.of(), List.of(), List.of(), List.of());
         when(resumeParserService.parse(any())).thenReturn(emptyParsed);
 
         MockMultipartFile file = new MockMultipartFile(

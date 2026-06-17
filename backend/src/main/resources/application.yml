@@ -10,8 +10,6 @@ spring:
 
   jpa:
     hibernate:
-      # Fix #7: Use 'validate' so Hibernate checks schema but never modifies it.
-      # Schema changes are managed by Flyway migrations instead.
       ddl-auto: validate
     show-sql: false
     open-in-view: false
@@ -21,9 +19,9 @@ spring:
         format_sql: true
 
   flyway:
-    # Fix #7: Enable Flyway for safe, versioned schema migrations
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
 
   autoconfigure:
     exclude:

@@ -29,6 +29,7 @@ public class CandidateProfile {
     private String headline;
     private String location;
     private String summary;
+    @Column(name = "resume_s3_key")
     private String resumeS3Key;
 
     @Enumerated(EnumType.STRING)
@@ -53,6 +54,7 @@ public class CandidateProfile {
     @Column(columnDefinition = "jsonb")
     private List<Certification> certifications;
 
+    @Builder.Default
     private boolean profileComplete = false;
 
     @UpdateTimestamp

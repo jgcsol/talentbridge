@@ -49,10 +49,13 @@ public class GapAnalysisService {
     public GapAnalysis analyzeAndSave(CandidateProfile candidate, OnetOccupation occupation) {
         GapAnalysisResult result = analyze(candidate, occupation);
 
-        // Fix #6: Use deleteAndFlush() so the DELETE is sent to the DB before the INSERT,
-        // preventing a unique constraint violation within the same transaction.
+        // Delete any existing analysis and flush so the DELETE is sent to the DB before
+        // the INSERT, preventing a unique constraint violation within the same transaction.
         gapAnalysisRepository.findByCandidateIdAndOccupationCode(candidate.getId(), occupation.code())
-                .ifPresent(gapAnalysisRepository::deleteAndFlush);
+                .ifPresent(existing -> {
+                    gapAnalysisRepository.delete(existing);
+                    gapAnalysisRepository.flush();
+                });
 
         GapAnalysis entity = GapAnalysis.builder()
                 .candidate(candidate)

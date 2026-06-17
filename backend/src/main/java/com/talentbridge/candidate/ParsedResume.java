@@ -4,6 +4,7 @@ import java.util.List;
 
 public record ParsedResume(
         String headline,
+        String location,
         String summary,
         List<CandidateProfile.Skill> skills,
         List<CandidateProfile.Experience> experiences,

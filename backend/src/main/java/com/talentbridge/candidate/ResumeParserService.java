@@ -24,6 +24,7 @@ public class ResumeParserService {
             Return ONLY valid JSON matching this exact schema — no markdown, no explanation:
             {
               "headline": "string (e.g. 'Senior Software Engineer')",
+              "location": "string (city and state/country, e.g. 'Austin, TX' — null if not present)",
               "summary": "string (2-3 sentence professional summary)",
               "skills": [
                 { "name": "string", "category": "string (e.g. Language, Framework, Cloud, Tool)", "yearsExperience": number_or_null, "proficiency": "BEGINNER|INTERMEDIATE|ADVANCED|EXPERT" }
@@ -73,6 +74,6 @@ public class ResumeParserService {
     }
 
     private ParsedResume emptyParsedResume() {
-        return new ParsedResume(null, null, List.of(), List.of(), List.of(), List.of());
+        return new ParsedResume(null, null, null, List.of(), List.of(), List.of(), List.of());
     }
 }
