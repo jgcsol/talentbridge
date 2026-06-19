@@ -1,8 +1,0 @@
-{
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.project.sourcePaths": ["src/main/java", "src/test/java"],
-    "java.project.outputPath": "target/classes",
-    "maven.executable.preferMavenWrapper": false,
-    "java.debug.settings.onBuildFailureProceed": false
-}
