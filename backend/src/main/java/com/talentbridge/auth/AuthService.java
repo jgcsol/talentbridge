@@ -48,7 +48,6 @@ public class AuthService {
             throw new IllegalArgumentException("Email already in use");
         }
 
-        // Fix #8: Restrict self-registration to CANDIDATE or EMPLOYER only
         if (request.role() != User.Role.CANDIDATE && request.role() != User.Role.EMPLOYER) {
             throw new IllegalArgumentException("Invalid role for registration");
         }
@@ -103,7 +102,6 @@ public class AuthService {
         userRepository.findByEmail(email).ifPresent(user -> {
             passwordResetTokenRepository.deleteAllByUserId(user.getId());
 
-            // Fix #11: Hash the token before storing so a DB breach doesn't expose active tokens
             String rawToken = UUID.randomUUID().toString();
             String hashedToken = hashToken(rawToken);
 
@@ -141,7 +139,6 @@ public class AuthService {
         passwordResetTokenRepository.save(resetToken);
     }
 
-    // Fix #11: SHA-256 hash of the raw token for safe storage
     private String hashToken(String rawToken) {
         try {
             java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
@@ -176,7 +173,6 @@ public class AuthService {
                     .build());
         } catch (Exception e) {
             log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
-            // Don't rethrow — caller must not know whether email was sent
         }
     }
 
