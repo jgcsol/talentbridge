@@ -3,6 +3,7 @@
 .env.local
 .env*.local
 !.env*.example
+docker-compose.yml
 
 # VS Code launch configs (may contain local credentials)
 **/.vscode/*

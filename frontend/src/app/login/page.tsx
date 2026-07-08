@@ -9,6 +9,7 @@ import { z } from 'zod'
 import api from '@/lib/api'
 import { saveAuth } from '@/lib/auth'
 import type { AuthResponse } from '@/lib/types'
+import LoginSkeleton from './LoginSkeleton'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -19,7 +20,7 @@ type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<LoginSkeleton/>}>
       <LoginContent />
     </Suspense>
   )

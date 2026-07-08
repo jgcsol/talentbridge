@@ -54,7 +54,7 @@ public class AuthService {
         }
 
         User user = User.builder()
-                .email(request.email())
+                .email(request.email().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(request.role())
                 .build();
@@ -100,7 +100,7 @@ public class AuthService {
     @Transactional
     public void forgotPassword(String email) {
         // Always return silently — never reveal whether the email exists
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmail(email.toLowerCase()).ifPresent(user -> {
             passwordResetTokenRepository.deleteAllByUserId(user.getId());
 
             // Fix #11: Hash the token before storing so a DB breach doesn't expose active tokens

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Suspense, useState } from 'react'
+import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { Nav } from '@/components/layout/Nav'
@@ -14,12 +14,27 @@ const NAV = [
   { href: '/employer/search',    label: 'Search Candidates' },
 ]
 
+/**
+ * Page shell — nav renders instantly; the profile-dependent content
+ * suspends behind the skeleton fallback until the query resolves.
+ */
 export default function EmployerDashboard() {
   const { isReady } = useAuth({ requiredRole: 'EMPLOYER' })
+
+  if (!isReady) return null
+
+  return (
+    <Suspense>
+      <EmployerDashboardContent />
+    </Suspense>
+  )
+}
+
+function EmployerDashboardContent() {
   const qc = useQueryClient()
   const [editing, setEditing] = useState(false)
 
-  const { data: profile, isLoading } = useQuery<EmployerProfile>({
+  const { data: profile } = useSuspenseQuery<EmployerProfile>({
     queryKey: ['employer-profile'],
     queryFn: () => employerApi.getProfile().then(r => r.data),
   })
@@ -36,8 +51,6 @@ export default function EmployerDashboard() {
     },
   })
 
-  if (!isReady) return null
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Nav links={NAV} />
@@ -45,7 +58,7 @@ export default function EmployerDashboard() {
       <main className="mx-auto max-w-3xl px-6 py-10 space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">
-            {profile?.companyName ?? 'Company Dashboard'}
+            {profile.companyName ?? 'Company Dashboard'}
           </h1>
           <Link href="/employer/search" className="btn-primary">
             🔍 Search Candidates
@@ -53,7 +66,7 @@ export default function EmployerDashboard() {
         </div>
 
         {/* Onboarding banner */}
-        {!profile?.companyName && (
+        {!profile.companyName && (
           <div className="card bg-brand-50 border-brand-200">
             <h2 className="font-semibold text-brand-900">Complete your company profile</h2>
             <p className="text-sm text-brand-700 mt-1">
@@ -73,13 +86,7 @@ export default function EmployerDashboard() {
             )}
           </div>
 
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-8 animate-pulse bg-gray-100 rounded" />
-              ))}
-            </div>
-          ) : editing ? (
+          {editing ? (
             <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -131,18 +138,18 @@ export default function EmployerDashboard() {
           ) : (
             <dl className="grid gap-4 sm:grid-cols-2 text-sm">
               {[
-                ['Company', profile?.companyName],
-                ['Industry', profile?.industry],
-                ['Size', profile?.companySize],
-                ['Location', profile?.location],
-                ['Website', profile?.website],
+                ['Company', profile.companyName],
+                ['Industry', profile.industry],
+                ['Size', profile.companySize],
+                ['Location', profile.location],
+                ['Website', profile.website],
               ].map(([label, value]) => value ? (
                 <div key={label as string}>
                   <dt className="text-gray-400 text-xs uppercase tracking-wide">{label}</dt>
                   <dd className="mt-0.5 font-medium text-gray-900">{value}</dd>
                 </div>
               ) : null)}
-              {profile?.description && (
+              {profile.description && (
                 <div className="sm:col-span-2">
                   <dt className="text-gray-400 text-xs uppercase tracking-wide">About</dt>
                   <dd className="mt-0.5 text-gray-700">{profile.description}</dd>

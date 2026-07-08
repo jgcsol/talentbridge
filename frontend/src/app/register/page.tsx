@@ -9,6 +9,7 @@ import { z } from 'zod'
 import api from '@/lib/api'
 import { saveAuth } from '@/lib/auth'
 import type { AuthResponse, UserRole } from '@/lib/types'
+import RegisterSkeleton from './RegisterSkeleton'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -24,7 +25,7 @@ type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
   return (
-    <Suspense>
+    <Suspense fallback= {<RegisterSkeleton/>}>
       <RegisterContent />
     </Suspense>
   )
