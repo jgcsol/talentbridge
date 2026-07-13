@@ -1,6 +1,7 @@
 package com.talentbridge.user;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -31,6 +32,10 @@ public class UserService implements UserDetailsService {
 
     public Optional<User> findByEmail(String email){
         return users.findByEmail(email);
+    }
+
+    public Optional<User> findById(UUID userId) {
+        return users.findById(userId);
     }
     
 }
