@@ -5,6 +5,9 @@ import com.talentbridge.auth.AuthDTOs.LoginRequest;
 import com.talentbridge.auth.AuthDTOs.RegisterRequest;
 import com.talentbridge.candidate.CandidateProfileService;
 import com.talentbridge.employer.EmployerProfileService;
+import com.talentbridge.user.User;
+import com.talentbridge.user.UserService;
+
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +94,7 @@ public class AuthService {
         }
         Claims claims = jwtService.parseToken(refreshToken);
         UUID userId = UUID.fromString(claims.getSubject());
-        User user = userRepository.findById(userId)
+        User user = userService.findById(userId)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
         return buildAuthResponse(user);
@@ -100,7 +103,7 @@ public class AuthService {
     @Transactional
     public void forgotPassword(String email) {
         // Always return silently — never reveal whether the email exists
-        userRepository.findByEmail(email.toLowerCase()).ifPresent(user -> {
+        userService.findByEmail(email.toLowerCase()).ifPresent(user -> {
             passwordResetTokenRepository.deleteAllByUserId(user.getId());
 
             // Fix #11: Hash the token before storing so a DB breach doesn't expose active tokens
@@ -135,7 +138,7 @@ public class AuthService {
 
         User user = resetToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
+        userService.save(user);
 
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);

@@ -1,10 +1,11 @@
 
 package com.talentbridge.employer;
 
-import com.talentbridge.auth.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.talentbridge.user.User;
 
 import java.util.UUID;
 

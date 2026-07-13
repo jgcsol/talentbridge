@@ -5,6 +5,9 @@ import com.talentbridge.auth.AuthDTOs.LoginRequest;
 import com.talentbridge.auth.AuthDTOs.RegisterRequest;
 import com.talentbridge.candidate.CandidateProfileService;
 import com.talentbridge.employer.EmployerProfileService;
+import com.talentbridge.user.User;
+import com.talentbridge.user.UserRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

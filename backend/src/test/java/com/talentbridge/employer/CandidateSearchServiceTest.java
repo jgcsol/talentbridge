@@ -1,8 +1,9 @@
 package com.talentbridge.employer;
 
-import com.talentbridge.auth.User;
 import com.talentbridge.candidate.CandidateProfile;
 import com.talentbridge.candidate.CandidateProfileRepository;
+import com.talentbridge.user.User;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -127,9 +128,9 @@ class CandidateSearchServiceTest {
     void search_exposesEmail_forPublicProfile() {
         CandidateProfile profile = buildProfile(CandidateProfile.Visibility.PUBLIC);
         // Set a user with email on the profile
-        com.talentbridge.auth.User user = com.talentbridge.auth.User.builder()
+        com.talentbridge.user.User user = com.talentbridge.user.User.builder()
                 .id(UUID.randomUUID()).email("candidate@example.com")
-                .role(com.talentbridge.auth.User.Role.CANDIDATE).build();
+                .role(com.talentbridge.user.User.Role.CANDIDATE).build();
         profile.setUser(user);
 
         Page<CandidateProfile> page = new PageImpl<>(List.of(profile));

@@ -1,7 +1,8 @@
 package com.talentbridge.candidate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.talentbridge.auth.User;
+import com.talentbridge.user.User;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;

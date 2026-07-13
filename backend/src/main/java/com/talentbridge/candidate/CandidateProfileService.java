@@ -1,7 +1,8 @@
 package com.talentbridge.candidate;
 
-import com.talentbridge.auth.User;
 import com.talentbridge.storage.S3Service;
+import com.talentbridge.user.User;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

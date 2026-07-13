@@ -1,9 +1,10 @@
 package com.talentbridge.ai;
 
-import com.talentbridge.auth.User;
-import com.talentbridge.auth.UserRepository;
 import com.talentbridge.candidate.CandidateProfile;
 import com.talentbridge.candidate.CandidateProfileRepository;
+import com.talentbridge.user.User;
+import com.talentbridge.user.UserRepository;
+
 import org.junit.jupiter.api.Test;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

@@ -1,4 +1,4 @@
-package com.talentbridge.auth;
+package com.talentbridge.user;
 
 import jakarta.persistence.*;
 import lombok.*;

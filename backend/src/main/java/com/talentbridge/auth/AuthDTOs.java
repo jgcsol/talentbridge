@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
 
+import com.talentbridge.user.User;
+
 // Request DTOs (Java records)
 
 public class AuthDTOs {

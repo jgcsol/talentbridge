@@ -1,7 +1,8 @@
 package com.talentbridge.candidate;
 
-import com.talentbridge.auth.User;
 import com.talentbridge.storage.S3Service;
+import com.talentbridge.user.User;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
