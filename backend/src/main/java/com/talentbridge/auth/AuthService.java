@@ -47,7 +47,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userService.exitstByEmail(request.email())) {
+        if (userService.existByEmail(request.email())) {
             throw new IllegalArgumentException("Email already in use");
         }
 
