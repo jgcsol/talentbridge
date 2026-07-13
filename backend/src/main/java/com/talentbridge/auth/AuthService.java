@@ -25,7 +25,7 @@ import java.util.UUID;
 @Slf4j
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CandidateProfileService candidateProfileService;
@@ -44,7 +44,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        if (userService.exitstByEmail(request.email())) {
             throw new IllegalArgumentException("Email already in use");
         }
 
@@ -59,7 +59,7 @@ public class AuthService {
                 .role(request.role())
                 .build();
 
-        user = userRepository.save(user);
+        user = userService.save(user);
 
         if (user.getRole() == User.Role.CANDIDATE) {
             candidateProfileService.createProfile(user);
@@ -71,7 +71,7 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userService.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
