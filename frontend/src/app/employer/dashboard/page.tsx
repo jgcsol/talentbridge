@@ -70,7 +70,7 @@ function EmployerDashboardContent() {
           <div className="card bg-brand-50 border-brand-200">
             <h2 className="font-semibold text-brand-900">Complete your company profile</h2>
             <p className="text-sm text-brand-700 mt-1">
-              Candidates can see who's viewing their profiles. A complete company profile builds trust.
+              Candidates can see who&aposs viewing their profiles. A complete company profile builds trust.
             </p>
           </div>
         )}

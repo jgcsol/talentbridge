@@ -350,7 +350,7 @@ export default function ExplorePage() {
               </div>
               <h2 className="text-lg font-bold text-gray-900">Resume required</h2>
               <p className="mt-2 text-sm leading-relaxed text-gray-500">
-                A gap analysis compares your profile against the role's O*NET requirements. Upload your résumé first so the AI has your skills and experience to work with.
+                A gap analysis compares your profile against the role&aposs O*NET requirements. Upload your résumé first so the AI has your skills and experience to work with.
               </p>
               <div className="mt-6 flex flex-col gap-2">
                 <Link
