@@ -22,7 +22,7 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(email));
     }
 
-    public Boolean exitstByEmail(String email){
+    public Boolean existByEmail(String email){
         return users.existsByEmail(email);
     }
 

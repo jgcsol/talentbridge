@@ -6,7 +6,7 @@ import com.talentbridge.auth.AuthDTOs.RegisterRequest;
 import com.talentbridge.candidate.CandidateProfileService;
 import com.talentbridge.employer.EmployerProfileService;
 import com.talentbridge.user.User;
-import com.talentbridge.user.UserRepository;
+import com.talentbridge.user.UserService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock private UserService userService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
     @Mock private CandidateProfileService candidateProfileService;
@@ -68,7 +68,7 @@ class AuthServiceTest {
     @Test
     void register_candidate_createsUserAndProfile() {
         var request = new RegisterRequest("new@example.com", "password123", User.Role.CANDIDATE);
-        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userService.existByEmail("new@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashed");
 
         User savedUser = User.builder()
@@ -77,7 +77,7 @@ class AuthServiceTest {
                 .passwordHash("hashed")
                 .role(User.Role.CANDIDATE)
                 .build();
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userService.save(any(User.class))).thenReturn(savedUser);
         when(jwtService.generateToken(any(), any(), any())).thenReturn("access-token");
         when(jwtService.generateRefreshToken(any(), any(), any())).thenReturn("refresh-token");
 
@@ -92,7 +92,7 @@ class AuthServiceTest {
     @Test
     void register_employer_createsEmployerProfile() {
         var request = new RegisterRequest("employer@example.com", "password123", User.Role.EMPLOYER);
-        when(userRepository.existsByEmail(any())).thenReturn(false);
+        when(userService.existByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashed");
 
         User savedUser = User.builder()
@@ -101,7 +101,7 @@ class AuthServiceTest {
                 .passwordHash("hashed")
                 .role(User.Role.EMPLOYER)
                 .build();
-        when(userRepository.save(any())).thenReturn(savedUser);
+        when(userService.save(any())).thenReturn(savedUser);
         when(jwtService.generateToken(any(), any(), any())).thenReturn("access");
         when(jwtService.generateRefreshToken(any(), any(), any())).thenReturn("refresh");
 
@@ -114,7 +114,7 @@ class AuthServiceTest {
     @Test
     void register_throwsIllegalArgument_whenEmailAlreadyInUse() {
         var request = new RegisterRequest("taken@example.com", "password123", User.Role.CANDIDATE);
-        when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
+        when(userService.existByEmail("taken@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -134,7 +134,7 @@ class AuthServiceTest {
                 .active(true)
                 .build();
 
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
         when(jwtService.generateToken(any(), any(), any())).thenReturn("access-token");
         when(jwtService.generateRefreshToken(any(), any(), any())).thenReturn("refresh-token");
@@ -147,7 +147,7 @@ class AuthServiceTest {
 
     @Test
     void login_throws_forUnknownEmail() {
-        when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
+        when(userService.findByEmail(any())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("nobody@example.com", "pw")))
                 .isInstanceOf(BadCredentialsException.class);
@@ -162,7 +162,7 @@ class AuthServiceTest {
                 .role(User.Role.CANDIDATE)
                 .active(true)
                 .build();
-        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+        when(userService.findByEmail(any())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("user@example.com", "wrong")))
@@ -178,7 +178,7 @@ class AuthServiceTest {
                 .role(User.Role.CANDIDATE)
                 .active(false)
                 .build();
-        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+        when(userService.findByEmail(any())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(any(), any())).thenReturn(true);
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("user@example.com", "password")))
@@ -190,7 +190,7 @@ class AuthServiceTest {
 
     @Test
     void forgotPassword_doesNotThrow_forUnknownEmail() {
-        when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
+        when(userService.findByEmail(any())).thenReturn(Optional.empty());
 
         assertThatCode(() -> authService.forgotPassword("nobody@example.com"))
                 .doesNotThrowAnyException();
@@ -204,7 +204,7 @@ class AuthServiceTest {
         User user = User.builder().id(userId).email("user@example.com")
                 .role(User.Role.CANDIDATE).build();
 
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordResetTokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         authService.forgotPassword("user@example.com");
@@ -219,7 +219,7 @@ class AuthServiceTest {
         User user = User.builder().id(userId).email("user@example.com")
                 .role(User.Role.CANDIDATE).build();
 
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
         var tokenCaptor = org.mockito.ArgumentCaptor.forClass(PasswordResetToken.class);
         when(passwordResetTokenRepository.save(tokenCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
@@ -252,7 +252,7 @@ class AuthServiceTest {
 
         when(passwordResetTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(token));
         when(passwordEncoder.encode("newPassword")).thenReturn("new-hash");
-        when(userRepository.save(any())).thenReturn(user);
+        when(userService.save(any())).thenReturn(user);
         when(passwordResetTokenRepository.save(any())).thenReturn(token);
 
         authService.resetPassword(rawToken, "newPassword");
