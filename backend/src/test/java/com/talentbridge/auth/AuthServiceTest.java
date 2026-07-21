@@ -14,9 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.services.ses.SesClient;
 
 import java.nio.charset.StandardCharsets;
@@ -38,6 +40,7 @@ class AuthServiceTest {
     @Mock private CandidateProfileService candidateProfileService;
     @Mock private EmployerProfileService employerProfileService;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock private EmailVerificationTokenRepository emailVerificationTokenRepository;
     @Mock private SesClient sesClient;
 
     @InjectMocks
@@ -132,6 +135,7 @@ class AuthServiceTest {
                 .passwordHash("hashed")
                 .role(User.Role.CANDIDATE)
                 .active(true)
+                .emailVerified(true)
                 .build();
 
         when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(user));
@@ -170,6 +174,24 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_throws_forUnverifiedEmail() {
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("user@example.com")
+                .passwordHash("hashed")
+                .role(User.Role.CANDIDATE)
+                .active(true)
+                .emailVerified(false)
+                .build();
+        when(userService.findByEmail(any())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(any(), any())).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest("user@example.com", "password")))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("verify your email");
+    }
+
+    @Test
     void login_throws_forInactiveAccount() {
         User user = User.builder()
                 .id(UUID.randomUUID())
@@ -184,6 +206,38 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(new LoginRequest("user@example.com", "password")))
                 .isInstanceOf(BadCredentialsException.class)
                 .hasMessageContaining("disabled");
+    }
+
+    // ─── verifyEmail ───────────────────────────────────────────────────────
+
+    @Test
+    void verifyEmail_marksUserAsVerified() {
+        String rawToken = "verify-raw-token";
+        String hashedToken = sha256(rawToken);
+
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("user@example.com")
+                .passwordHash("hashed")
+                .role(User.Role.CANDIDATE)
+                .emailVerified(false)
+                .active(true)
+                .build();
+        EmailVerificationToken token = EmailVerificationToken.builder()
+                .token(hashedToken)
+                .user(user)
+                .expiresAt(Instant.now().plusSeconds(300))
+                .used(false)
+                .build();
+
+        when(emailVerificationTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(token));
+        when(userService.save(any())).thenReturn(user);
+        when(emailVerificationTokenRepository.save(any())).thenReturn(token);
+
+        authService.verifyEmail(rawToken);
+
+        assertThat(user.isEmailVerified()).isTrue();
+        assertThat(token.isUsed()).isTrue();
     }
 
     // ─── forgotPassword ──────────────────────────────────────────────────────

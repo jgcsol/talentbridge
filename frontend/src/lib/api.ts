@@ -34,6 +34,10 @@ export default api;
 export const authApi = {
   register: (data: { email: string; password: string; role: 'CANDIDATE' | 'EMPLOYER' }) =>
     api.post('/auth/register', data),
+  verifyEmail: (token: string) =>
+    api.post('/auth/verify-email', { token }),
+  resendVerification: (email: string) =>
+    api.post('/auth/resend-verification', { email }),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
 };

@@ -12,6 +12,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+        type:
+          json_format_mapper: org.hibernate.type.format.jackson.JacksonJsonFormatMapper
 
   flyway:
     enabled: false
@@ -58,3 +60,7 @@ app:
       bucket: test-bucket
     ses:
       from-email: noreply@test.com
+
+  branding:
+    talentbridge-logo-url: https://example.com/talentbridge-logo.png
+    jgc-logo-url: https://example.com/jgc-logo.png
