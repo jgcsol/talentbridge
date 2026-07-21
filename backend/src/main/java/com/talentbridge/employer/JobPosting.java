@@ -41,7 +41,6 @@ public class JobPosting {
     private Status status = Status.OPEN;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
     private List<String> requiredSkills;
 
     @CreationTimestamp

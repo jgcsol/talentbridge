@@ -135,6 +135,7 @@ class AuthServiceTest {
                 .passwordHash("hashed")
                 .role(User.Role.CANDIDATE)
                 .active(true)
+                .emailVerified(true)
                 .build();
 
         when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(user));

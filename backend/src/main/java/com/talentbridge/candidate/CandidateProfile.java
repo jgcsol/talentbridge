@@ -40,19 +40,15 @@ public class CandidateProfile {
 
     // Stored as JSON for flexibility
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
     private List<Skill> skills;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
     private List<Experience> experiences;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
     private List<Education> educations;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
     private List<Certification> certifications;
 
     @Builder.Default
