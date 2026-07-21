@@ -38,21 +38,21 @@ public class CandidateProfile {
     @Builder.Default
     private Visibility visibility = Visibility.EMPLOYERS_ONLY;
 
-    // Stored as JSONB for flexibility
+    // Stored as JSON for flexibility
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<Skill> skills;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<Experience> experiences;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<Education> educations;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<Certification> certifications;
 
     @Builder.Default
