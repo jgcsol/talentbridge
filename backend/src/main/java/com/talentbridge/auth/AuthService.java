@@ -35,6 +35,7 @@ public class AuthService {
     private final EmployerProfileService employerProfileService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final SesClient sesClient;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     @Value("${app.aws.ses.from-email}")
     private String fromEmail;
@@ -51,7 +52,7 @@ public class AuthService {
     @Value("${app.branding.talentbridge-logo-url}")
     private String talentBridgeLogoUrl;
     
-    private EmailVerificationTokenRepository emailVerificationTokenRepository;
+    
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
