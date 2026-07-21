@@ -43,15 +43,15 @@ public class GapAnalysis {
     private int educationScore;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<GapAnalysisResult.Strength> strengths;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<GapAnalysisResult.Gap> gaps;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private List<GapAnalysisResult.Recommendation> recommendations;
 
     @Column(columnDefinition = "TEXT")
