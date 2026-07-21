@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '@/lib/api'
-import { saveAuth } from '@/lib/auth'
 import type { AuthResponse, UserRole } from '@/lib/types'
 import RegisterSkeleton from './RegisterSkeleton'
 
@@ -52,8 +51,7 @@ function RegisterContent() {
         password: data.password,
         role: data.role,
       })
-      saveAuth(res.data)
-      router.push(res.data.role === 'CANDIDATE' ? '/candidate/dashboard' : '/employer/dashboard')
+      router.push('/login?verified=1')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
       setError(msg ?? 'Registration failed. Please try again.')

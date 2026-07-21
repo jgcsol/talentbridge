@@ -36,6 +36,14 @@ public class AuthDTOs {
             String role
     ) {}
 
+    public record VerifyEmailRequest(
+            @NotBlank String token
+    ) {}
+
+    public record ResendVerificationRequest(
+            @Email @NotBlank String email
+    ) {}
+
     public record ForgotPasswordRequest(
             @Email @NotBlank String email
     ) {}
