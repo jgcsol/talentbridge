@@ -1,3 +1,16 @@
+# Docker and certs
+/certbot/
+/nginx/*.conf
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
 # ── Secrets / local config ────────────────────────────────────────────────────
 .env
 .env.local

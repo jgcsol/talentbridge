@@ -49,8 +49,8 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: talentbridge
-      POSTGRES_USER: talentbridge
+      POSTGRES_DB: <db-name>
+      POSTGRES_USER: <user>
       POSTGRES_PASSWORD: <password>
     volumes:
       - pgdata:/var/lib/postgresql/data
