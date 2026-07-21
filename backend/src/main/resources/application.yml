@@ -75,6 +75,9 @@ app:
       bucket: ${AWS_S3_RESUME_BUCKET}
     ses:
       from-email: ${AWS_SES_FROM_EMAIL}
+  branding:
+    talentbridge-logo-url: ${TALENTBRIDGE_LOGO_URL}
+    jgc-logo-url: ${JGC_SOLUTIONS_LOGO_URL}
 
 logging:
   level:

@@ -31,6 +31,7 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const fromPath = searchParams.get('from')
   const passwordReset = searchParams.get('reset') === '1'
+  const accountCreated = searchParams.get('verified') === '1'
   const [error, setError] = useState('')
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -45,8 +46,11 @@ function LoginContent() {
       router.push(fromPath ?? defaultDest)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
       if (status === 401) {
         setError('Invalid email or password.')
+      } else if (status === 403 || detail?.includes('verify your email')) {
+        setError('Please verify your email before signing in. Check your inbox for the verification link.')
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -125,6 +129,13 @@ function LoginContent() {
             <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-green-50 border border-green-100 px-4 py-3">
               <span className="mt-0.5 text-green-500">✓</span>
               <p className="text-sm text-green-700">Password updated successfully. Sign in with your new password.</p>
+            </div>
+          )}
+
+          {accountCreated && (
+            <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+              <span className="mt-0.5 text-blue-500">✉️</span>
+              <p className="text-sm text-blue-700">Account created. Check your email and verify your address before signing in.</p>
             </div>
           )}
 
