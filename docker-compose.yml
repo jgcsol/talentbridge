@@ -13,7 +13,7 @@ services:
       DB_NAME: talentbridge
       DB_USERNAME: <user>
       DB_PASSWORD: <password>
-      JWT_SECRET :  Ed6wBFMbKr/bSKjr8PLFL20S0BT5AEi8QHAdZbF9SSU= 
+      JWT_SECRET :  <secret> 
       JWT_EXPIRATION :  86400000 
       JWT_REFRESH_EXPIRATION :  604800000 
       ANTHROPIC_API_KEY : <key>
