@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: talentbridge-backend:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: <your-db-host>
+      DB_PORT: 5432
+      DB_NAME: talentbridge
+      DB_USERNAME: <user>
+      DB_PASSWORD: <password>
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: talentbridge-frontend:latest
+    environment:
+      NODE_ENV: production
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.config:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - frontend
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: talentbridge
+      POSTGRES_USER: talentbridge
+      POSTGRES_PASSWORD: <password>
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
