@@ -13,6 +13,17 @@ services:
       DB_NAME: talentbridge
       DB_USERNAME: <user>
       DB_PASSWORD: <password>
+      JWT_SECRET :  <secret> 
+      JWT_EXPIRATION :  86400000 
+      JWT_REFRESH_EXPIRATION :  604800000 
+      ANTHROPIC_API_KEY : <key>
+      ONET_API_KEY :  <key> 
+      AWS_S3_RESUME_BUCKET :  talentbridge-resumes 
+      AWS_SES_FROM_EMAIL :  noreply@jgcsol.com 
+      CORS_ORIGINS :  http://localhost:3000/ 
+      FRONTEND_URL :  http://localhost:3000/ 
+      TALENTBRIDGE_LOGO_URL :  https://talentbridge.s3.amazonaws.com/talentbridge-logo.png 
+      JGC_SOLUTIONS_LOGO_URL :  https://s3.us-east-1.amazonaws.com/jgcsol.com/images/logo.png
     depends_on:
       - postgres
 
@@ -31,16 +42,15 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.config:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
     depends_on:
       - backend
       - frontend
-
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: talentbridge
-      POSTGRES_USER: talentbridge
+      POSTGRES_DB: <db-name>
+      POSTGRES_USER: <user>
       POSTGRES_PASSWORD: <password>
     volumes:
       - pgdata:/var/lib/postgresql/data
