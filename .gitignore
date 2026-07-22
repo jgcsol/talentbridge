@@ -1,6 +1,7 @@
 # Docker and certs
 /certbot/
 /nginx/*.conf
+docker-compose.yml
 
 # IDEs
 .vscode/
