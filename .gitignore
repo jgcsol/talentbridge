@@ -2,6 +2,7 @@
 /certbot/
 /nginx/*.conf
 docker-compose.yml
+nginx/*
 
 # IDEs
 .vscode/
